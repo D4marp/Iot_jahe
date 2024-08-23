@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <section class="sensor-display">
+            <div class="sensor">
+                <h2>Sensor 1</h2>
+                <p id="sensor1">25°C</p>
+            </div>
+            <div class="sensor">
+                <h2>Sensor 2</h2>
+                <p id="sensor2">26°C</p>
+            </div>
+            <div class="sensor">
+                <h2>Sensor 3</h2>
+                <p id="sensor3">24°C</p>
+            </div>
+            <div class="sensor">
+                <h2>Sensor 4</h2>
+                <p id="sensor4">27°C</p>
+            </div>
+            <div class="sensor">
+                <h2>Sensor 5</h2>
+                <p id="sensor5">26°C</p>
+            </div>
+            <div class="sensor">
+                <h2>Sensor 6</h2>
+                <p id="sensor6">25°C</p>
+            </div>
+            <div class="sensor average">
+                <h2>Rata-rata</h2>
+                <p id="average">25.5°C</p>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="controls">
+                <div class="control">
+                    <label for="setSuhu">Temperature</label>
+                    <div class="input-group">
+                        <button class="btn-decrease" onclick="adjustValue('suhu', -2)">-</button>
+                        <span id="suhu">0</span>°C
+                        <button class="btn-increase" onclick="adjustValue('suhu', 2)">+</button>
+                    </div>
+                </div>
+            
+                <div class="control">
+                    <label for="setWaktu">Time</label>
+                    <div class="input-group">
+                        <button class="btn-decrease" onclick="adjustValue('waktu', -1)">-</button>
+                        <span id="waktu">0</span> min
+                        <button class="btn-increase" onclick="adjustValue('waktu', 1)">+</button>
+                    </div>
+                </div>
+            
+                <div class="control">
+                    <label for="setKecepatan">RPM Fan</label>
+                    <div class="input-group">
+                        <button class="btn-decrease" onclick="adjustValue('kecepatan', -500)">-</button>
+                        <span id="kecepatan">0</span>
+                        <button class="btn-increase" onclick="adjustValue('kecepatan', 500)">+</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="power-control">
+            <button class="power-button" id="powerButton" onclick="togglePower()">OFF</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script>
+        const client = mqtt.connect('ws://broker.hivemq.com:8000/mqtt');
+    
+        client.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            client.subscribe('iot/#'); // Subscribe to all topics under 'iot/'
+        });
+    
+        client.on('message', (topic, message) => {
+            const value = message.toString();
+    
+            if (topic === 'iot/suhu') {
+                document.getElementById('suhu').textContent = value;
+            } else if (topic === 'iot/waktu') {
+                document.getElementById('waktu').textContent = value;
+            } else if (topic === 'iot/kecepatan') {
+                document.getElementById('kecepatan').textContent = value;
+            } else if (topic === 'iot/power') {
+                const powerButton = document.getElementById('powerButton');
+                if (value === 'ON') {
+                    powerButton.classList.add('on');
+                    powerButton.textContent = 'ON';
+                } else if (value === 'OFF') {
+                    powerButton.classList.remove('on');
+                    powerButton.textContent = 'OFF';
+                }
+            }
+        });
+    
+        function adjustValue(control, increment) {
+            const element = document.getElementById(control);
+            let value = parseInt(element.textContent);
+            value += increment;
+            if (value < 0) value = 0;  // Prevent negative values
+            element.textContent = value;
+            client.publish(`iot/${control}`, value.toString()); // Publish updated value to MQTT
+        }
+    
+        function togglePower() {
+            const powerButton = document.getElementById('powerButton');
+            let newState;
+            if (powerButton.classList.contains('on')) {
+                newState = 'OFF';
+            } else {
+                newState = 'ON';
+            }
+            client.publish('iot/power', newState);
+        }
+    </script>
+    
+</body>
+</html>
