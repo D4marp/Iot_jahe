@@ -8,13 +8,18 @@ client.on('connect', () => {
 client.on('message', (topic, message) => {
     const value = message.toString();
 
+    // Handle incoming messages based on topic
     if (topic === 'iot/suhu') {
+        // Update temperature display
         document.getElementById('suhu').textContent = value;
     } else if (topic === 'iot/waktu') {
+        // Update time display
         document.getElementById('waktu').textContent = value;
     } else if (topic === 'iot/kecepatan') {
+        // Update speed display
         document.getElementById('kecepatan').textContent = value;
     } else if (topic === 'iot/power') {
+        // Update power button state
         const powerButton = document.getElementById('powerButton');
         if (value === 'ON') {
             powerButton.classList.add('on');
@@ -28,7 +33,7 @@ client.on('message', (topic, message) => {
 
 function adjustValue(control, increment) {
     const element = document.getElementById(control);
-    let value = parseInt(element.textContent);
+    let value = parseInt(element.textContent, 10);
     value += increment;
     if (value < 0) value = 0;  // Prevent negative values
     element.textContent = value;
